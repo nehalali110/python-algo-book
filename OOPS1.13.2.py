@@ -13,10 +13,10 @@ class LogicGate:
 
 
 class BinaryGate(LogicGate):
-	def __init__(self, label) -> None:
+	def __init__(self, label, pinA=None, pinB=None) -> None:
 		super().__init__(label)
-		self.pinA = None
-		self.pinB = None
+		self.pinA = pinA
+		self.pinB = pinB
 
 	def get_pin_A(self):
 		return self.get_pin_input(self.pinA, 'A')
@@ -34,8 +34,15 @@ class BinaryGate(LogicGate):
 
 
 	def get_pin_input(self, PIN, label):
-		if PIN:
-			return PIN.get_source_gate().get_output()
+		if PIN or PIN == 0:
+			if isinstance(PIN, Connector):
+				return PIN.get_source_gate().get_output()
+			elif PIN in [0,1]:
+				if label.upper() == 'A':
+					return self.pinA
+				elif label.upper() == 'B':
+					return self.pinB
+			raise Exception(f'PIN {label} can be a valid integer [0,1] or a connector object')
 		user_input = input(f"Enter value of PIN {label} for gate {self.get_label()}: ")
 		if user_input == '1' or user_input == '0':
 			return int(user_input)
@@ -53,8 +60,8 @@ class UnaryGate(LogicGate):
 
 
 class AndGate(BinaryGate):
-	def __init__(self, label) -> None:
-		super().__init__(label)
+	def __init__(self, label, pinA=None, pinB=None) -> None:
+		super().__init__(label, pinA, pinB)
 
 	def perform_output(self):
 		self.pinA = self.get_pin_A()
@@ -65,8 +72,8 @@ class AndGate(BinaryGate):
 
 
 class ORGate(BinaryGate):
-	def __init__(self, label) -> None:
-		super().__init__(label)
+	def __init__(self, label, pinA=None, pinB=None) -> None:
+		super().__init__(label, pinA, pinB)
 
 	def perform_output(self):
 		self.pinA = self.get_pin_A()
@@ -87,28 +94,24 @@ class NOTGate(UnaryGate):
 		return 1
 
 
-class NANDGate(BinaryGate):
-	def __init__(self, label) -> None:
-		super().__init__(label)
-
+class NANDGate(AndGate):
 	def perform_output(self):
-		self.pinA = self.get_pin_A()
-		self.pinB = self.get_pin_B()
-		if self.pinA == 1 and self.pinB == 1:
+		if super().perform_output() == 1:
 			return 0
 		return 1
 
 
-class NORGate(BinaryGate):
-	def __init__(self, label) -> None:
-		super().__init__(label)
-
+class NORGate(ORGate):
 	def perform_output(self):
-		self.pinA = self.get_pin_A()
-		self.pinB = self.get_pin_B()
-		if self.pinA == 0 and self.pinB == 0:
-			return 1
-		return 0
+		if super().perform_output() == 1:
+			return 0
+		return 1
+
+class XORGate(ORGate):
+	def perform_output(self):
+		if self.pinA == 1 and self.pinB == 1:
+			return 0
+		return super().perform_output()
 
 
 class Connector:
@@ -123,6 +126,9 @@ class Connector:
 	def get_dest_gate(self):
 		return self.dest_gate
 
+class HalfAdder(BinaryGate):
+	sum = 
+
 
 
 
@@ -134,6 +140,35 @@ class Connector:
 # C2 = Connector(A2, O1)
 # C3 = Connector(O1, A3)
 # print(A3.get_output())
-nandgate = NANDGate('N1')
-norgate = NORGate('NOR1')
-print(norgate.get_output())
+# nandgate = NANDGate('N1')
+# norgate = NORGate('NOR1')
+# print(norgate.get_output())
+
+# A = int(input('A: '))
+# B = int(input('B: '))
+# C = int(input('C: '))
+# D = int(input('D: '))
+
+# A1 = AndGate('A1', A, B)
+# B1 = AndGate('B1', C, D)
+# NOR1 = NORGate('OR1')
+# C1 = Connector(A1, NOR1)
+# C2 = Connector(B1, NOR1)
+
+# print(f"LHS: {NOR1.get_output()}")
+
+# A2 = NANDGate('A2', A, B)
+# B2 = NANDGate('B2', C, D)
+# AND1 = AndGate('AND1')
+
+# C3 = Connector(A2, AND1)
+# C4 = Connector(B2, AND1)
+
+# print(f"RHS: {AND1.get_output()}")
+
+N1 = NANDGate('N1', 1, 0)
+NOR1 = NORGate('NOR1', 1,0)
+XOR1 = XORGate('XOR1', 1,0)
+print(N1.get_output())
+print(NOR1.get_output())
+print(XOR1.get_output())
